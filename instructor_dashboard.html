@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CyberPath — Instructor Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+  :root {
+    --bg:      #0a0e1a;
+    --panel:   #111827;
+    --panel2:  #1a2235;
+    --border:  #1e2d45;
+    --accent:  #00d4ff;
+    --accent2: #7c3aed;
+    --green:   #10b981;
+    --yellow:  #f59e0b;
+    --red:     #ef4444;
+    --text:    #e2e8f0;
+    --muted:   #64748b;
+    --mono:    'JetBrains Mono', monospace;
+    --sans:    'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+  /* NAV */
+  nav {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-left { display: flex; align-items: center; gap: 16px; }
+  .nav-logo { font-family: var(--mono); font-weight: 700; font-size: 16px; color: var(--accent); letter-spacing: .05em; }
+  .nav-logo span { color: var(--text); }
+  .nav-divider { width: 1px; height: 22px; background: var(--border); }
+  .nav-title { font-size: 14px; font-weight: 600; color: var(--muted); }
+  .nav-right { display: flex; align-items: center; gap: 14px; }
+  .badge { background: var(--accent2); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 99px; }
+  .live-dot { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--green); font-family: var(--mono); }
+  .dot-pulse { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 0 0 rgba(16,185,129,.4); animation: pulse 1.8s infinite; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(16,185,129,.4)} 70%{box-shadow:0 0 0 8px rgba(16,185,129,0)} 100%{box-shadow:0 0 0 0 rgba(16,185,129,0)} }
+
+  /* LAYOUT */
+  .page { display: grid; grid-template-columns: 220px 1fr; height: calc(100vh - 58px); overflow: hidden; }
+
+  /* LEFT NAV */
+  .leftnav { background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+  .leftnav-section { padding: 18px 16px 10px; }
+  .leftnav-label { font-size: 10px; font-weight: 700; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+  .module-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 7px;
+    font-size: 13px; color: var(--muted);
+    cursor: pointer; transition: all .2s; margin-bottom: 3px;
+    border: 1px solid transparent;
+  }
+  .module-item:hover { background: var(--panel2); color: var(--text); }
+  .module-item.active { background: rgba(0,212,255,.08); color: var(--accent); border-color: rgba(0,212,255,.2); }
+  .module-item.locked { opacity: .4; cursor: default; }
+  .module-num { font-family: var(--mono); font-size: 11px; font-weight: 700; width: 20px; }
+
+  .class-info { padding: 14px 16px; border-top: 1px solid var(--border); }
+  .class-stat { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 12px; border-bottom: 1px solid var(--border); }
+  .class-stat:last-child { border-bottom: none; }
+  .class-stat-val { font-family: var(--mono); font-weight: 700; color: var(--accent); }
+
+  /* MAIN */
+  .main { display: flex; flex-direction: column; overflow: hidden; }
+
+  /* TOP STATS BAR */
+  .stats-bar {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .stat-card {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .stat-label { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+  .stat-val { font-size: 28px; font-weight: 800; font-family: var(--mono); color: var(--text); line-height: 1; }
+  .stat-val.green { color: var(--green); }
+  .stat-val.yellow { color: var(--yellow); }
+  .stat-val.accent { color: var(--accent); }
+  .stat-sub { font-size: 11px; color: var(--muted); }
+
+  /* CLASS PROGRESS BAR */
+  .class-progress-wrap {
+    padding: 14px 24px 10px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .cp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .cp-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .cp-pct { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+  .cp-bar { height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .cp-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 99px; transition: width .8s ease; }
+
+  /* OBJ BREAKDOWN */
+  .obj-breakdown {
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 6px;
+    margin-top: 10px;
+  }
+  .obj-chip {
+    background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 10px;
+    font-size: 11px; color: var(--muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .obj-chip-fill { flex: 1; height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .obj-chip-bar { height: 100%; background: var(--green); border-radius: 99px; transition: width .8s ease; }
+
+  /* STUDENT GRID */
+  .students-area { flex: 1; overflow-y: auto; padding: 20px 24px; }
+  .students-area::-webkit-scrollbar { width: 6px; }
+  .students-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .students-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .students-title { font-size: 15px; font-weight: 700; }
+  .filter-row { display: flex; gap: 8px; }
+  .filter-btn {
+    background: var(--panel); border: 1px solid var(--border);
+    color: var(--muted); font-size: 12px; font-family: var(--mono);
+    padding: 5px 12px; border-radius: 5px; cursor: pointer; transition: all .2s;
+  }
+  .filter-btn:hover, .filter-btn.active { background: rgba(0,212,255,.08); color: var(--accent); border-color: rgba(0,212,255,.3); }
+
+  .student-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+
+  .student-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .student-card:hover { border-color: rgba(0,212,255,.3); transform: translateY(-1px); }
+  .student-card.complete { border-color: rgba(16,185,129,.3); }
+  .student-card.stuck { border-color: rgba(239,68,68,.25); }
+  .student-card.idle { opacity: .7; }
+
+  .student-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .student-name { font-size: 14px; font-weight: 600; }
+  .student-time { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .status-pill {
+    margin-left: auto; font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 99px; letter-spacing: .04em;
+  }
+  .pill-active { background: rgba(0,212,255,.12); color: var(--accent); }
+  .pill-done   { background: rgba(16,185,129,.15); color: var(--green); }
+  .pill-stuck  { background: rgba(239,68,68,.12); color: var(--red); }
+  .pill-idle   { background: rgba(100,116,139,.15); color: var(--muted); }
+
+  /* per-student obj dots */
+  .obj-dots { display: flex; gap: 6px; margin-bottom: 10px; }
+  .obj-dot {
+    flex: 1; height: 4px; border-radius: 99px;
+    background: var(--border); transition: background .4s;
+  }
+  .obj-dot.done { background: var(--green); }
+  .obj-dot.current { background: var(--accent); animation: shimmer 1.5s infinite; }
+  @keyframes shimmer { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+  /* last command */
+  .last-cmd {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--muted); background: var(--panel2);
+    border: 1px solid var(--border); border-radius: 5px;
+    padding: 5px 9px; display: flex; align-items: center; gap: 6px;
+  }
+  .last-cmd-prompt { color: var(--accent); }
+  .last-cmd-text { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* progress text */
+  .progress-text { font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .progress-text strong { color: var(--text); }
+
+  /* completion glow */
+  .student-card.complete::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(16,185,129,.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .complete-badge {
+    position: absolute; top: 12px; right: 12px;
+    font-size: 18px;
+  }
+
+  /* DETAIL PANEL (slide-in) */
+  .detail-overlay {
+    position: fixed; inset: 0; background: rgba(10,14,26,.7);
+    z-index: 50; display: none; align-items: flex-start; justify-content: flex-end;
+  }
+  .detail-overlay.open { display: flex; }
+  .detail-panel {
+    width: 380px; height: 100vh;
+    background: var(--panel); border-left: 1px solid var(--border);
+    overflow-y: auto; padding: 24px;
+    animation: slideIn .25s ease;
+  }
+  @keyframes slideIn { from{transform:translateX(40px);opacity:0} to{transform:translateX(0);opacity:1} }
+  .detail-close {
+    position: absolute; top: 16px; right: 16px;
+    background: var(--panel2); border: 1px solid var(--border);
+    color: var(--muted); font-size: 18px; width: 32px; height: 32px;
+    border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .detail-close:hover { color: var(--text); }
+  .detail-name { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+  .detail-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+  .detail-section { margin-bottom: 20px; }
+  .detail-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+
+  .obj-detail-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .obj-detail-row:last-child { border-bottom: none; }
+  .obj-detail-icon { font-size: 14px; width: 20px; text-align: center; }
+  .obj-detail-time { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+  .cmd-log { display: flex; flex-direction: column; gap: 6px; }
+  .cmd-log-item {
+    background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 10px;
+    font-family: var(--mono); font-size: 12px;
+  }
+  .cmd-log-time { color: var(--muted); font-size: 10px; margin-bottom: 3px; }
+  .cmd-log-cmd { color: var(--accent); }
+
+  .instructor-note-area {
+    width: 100%; background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 7px; padding: 10px; color: var(--text);
+    font-family: var(--sans); font-size: 13px; resize: vertical; min-height: 80px;
+    outline: none; margin-top: 6px;
+  }
+  .instructor-note-area:focus { border-color: var(--accent); }
+  .nudge-btn {
+    width: 100%; margin-top: 10px;
+    background: var(--accent2); color: #fff; border: none;
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    padding: 10px; border-radius: 7px; cursor: pointer; transition: opacity .2s;
+  }
+  .nudge-btn:hover { opacity: .85; }
+  .nudge-sent { text-align: center; color: var(--green); font-size: 13px; margin-top: 8px; display: none; }
+
+  /* CONTROLS BAR */
+  .controls-bar {
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 14px;
+    flex-shrink: 0;
+  }
+  .ctrl-btn {
+    background: var(--panel2); border: 1px solid var(--border);
+    color: var(--text); font-size: 13px; font-family: var(--mono);
+    padding: 8px 16px; border-radius: 7px; cursor: pointer; transition: all .2s;
+  }
+  .ctrl-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .ctrl-btn.danger:hover { border-color: var(--red); color: var(--red); }
+  .ctrl-spacer { flex: 1; }
+  .ctrl-info { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <div class="nav-logo">CYBER<span>PATH</span></div>
+    <div class="nav-divider"></div>
+    <div class="nav-title">Instructor Dashboard</div>
+  </div>
+  <div class="nav-right">
+    <span class="badge">Module 1 of 6</span>
+    <div class="live-dot"><div class="dot-pulse"></div> LIVE</div>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- LEFT NAV -->
+  <aside class="leftnav">
+    <div class="leftnav-section">
+      <div class="leftnav-label">Modules</div>
+      <div class="module-item active">
+        <span class="module-num">01</span> Who's on the Network?
+      </div>
+      <div class="module-item locked">
+        <span class="module-num">02</span> Who Are You Talking To?
+      </div>
+      <div class="module-item locked">
+        <span class="module-num">03</span> What's Broken?
+      </div>
+      <div class="module-item locked">
+        <span class="module-num">04</span> Something's Wrong
+      </div>
+      <div class="module-item locked">
+        <span class="module-num">05</span> How Do We Stay Safe?
+      </div>
+      <div class="module-item locked">
+        <span class="module-num">06</span> Capstone
+      </div>
+    </div>
+
+    <div style="flex:1"></div>
+
+    <div class="class-info">
+      <div class="leftnav-label" style="padding:0 0 6px">Session Info</div>
+      <div class="class-stat"><span>Class</span><span class="class-stat-val">CYB-A</span></div>
+      <div class="class-stat"><span>Students</span><span class="class-stat-val" id="totalStudents">16</span></div>
+      <div class="class-stat"><span>Started</span><span class="class-stat-val" id="sessionTime">--:--</span></div>
+      <div class="class-stat"><span>Elapsed</span><span class="class-stat-val" id="elapsed">0m</span></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- STATS BAR -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-label">Completed</div>
+        <div class="stat-val green" id="statDone">0</div>
+        <div class="stat-sub" id="statDonePct">0% of class</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">In Progress</div>
+        <div class="stat-val accent" id="statActive">0</div>
+        <div class="stat-sub">actively working</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Need Help</div>
+        <div class="stat-val yellow" id="statStuck">0</div>
+        <div class="stat-sub">stuck &gt; 3 min</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Progress</div>
+        <div class="stat-val" id="statAvg">0%</div>
+        <div class="stat-sub">across all students</div>
+      </div>
+    </div>
+
+    <!-- CLASS PROGRESS -->
+    <div class="class-progress-wrap">
+      <div class="cp-header">
+        <span class="cp-title">Class Completion — Module 1</span>
+        <span class="cp-pct" id="classPct">0%</span>
+      </div>
+      <div class="cp-bar"><div class="cp-fill" id="cpFill" style="width:0%"></div></div>
+      <div class="obj-breakdown">
+        <div class="obj-chip">
+          <span>Obj 1</span>
+          <div class="obj-chip-fill"><div class="obj-chip-bar" id="ob1" style="width:0%"></div></div>
+          <span id="ob1pct" style="font-family:var(--mono);font-size:10px;color:var(--green)">0%</span>
+        </div>
+        <div class="obj-chip">
+          <span>Obj 2</span>
+          <div class="obj-chip-fill"><div class="obj-chip-bar" id="ob2" style="width:0%"></div></div>
+          <span id="ob2pct" style="font-family:var(--mono);font-size:10px;color:var(--green)">0%</span>
+        </div>
+        <div class="obj-chip">
+          <span>Obj 3</span>
+          <div class="obj-chip-fill"><div class="obj-chip-bar" id="ob3" style="width:0%"></div></div>
+          <span id="ob3pct" style="font-family:var(--mono);font-size:10px;color:var(--green)">0%</span>
+        </div>
+        <div class="obj-chip">
+          <span>Obj 4</span>
+          <div class="obj-chip-fill"><div class="obj-chip-bar" id="ob4" style="width:0%"></div></div>
+          <span id="ob4pct" style="font-family:var(--mono);font-size:10px;color:var(--green)">0%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STUDENT GRID -->
+    <div class="students-area">
+      <div class="students-header">
+        <div class="students-title">Students <span style="color:var(--muted);font-weight:400;font-size:13px" id="studentCount"></span></div>
+        <div class="filter-row">
+          <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+          <button class="filter-btn" onclick="setFilter('active',this)">Active</button>
+          <button class="filter-btn" onclick="setFilter('stuck',this)">Need Help</button>
+          <button class="filter-btn" onclick="setFilter('complete',this)">Done</button>
+        </div>
+      </div>
+      <div class="student-grid" id="studentGrid"></div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls-bar">
+      <button class="ctrl-btn" onclick="pauseAll()">⏸ Pause All Labs</button>
+      <button class="ctrl-btn" onclick="showHintAll()">💡 Push Hint to All</button>
+      <button class="ctrl-btn" onclick="broadcastMsg()">📢 Broadcast Message</button>
+      <div class="ctrl-spacer"></div>
+      <span class="ctrl-info" id="lastUpdate">Simulating live data...</span>
+      <button class="ctrl-btn danger" onclick="endSession()">End Session</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail(event)">
+  <div class="detail-panel" id="detailPanel">
+    <button class="detail-close" onclick="closeDetailPanel()">✕</button>
+    <div class="detail-name" id="dName">—</div>
+    <div class="detail-sub" id="dSub">—</div>
+
+    <div class="detail-section">
+      <div class="detail-label">Objectives</div>
+      <div id="dObjs"></div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-label">Command History</div>
+      <div class="cmd-log" id="dCmdLog"></div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-label">Send a Nudge</div>
+      <textarea class="instructor-note-area" id="nudgeText" placeholder="Type a private hint or encouragement..."></textarea>
+      <button class="nudge-btn" onclick="sendNudge()">Send to Student →</button>
+      <div class="nudge-sent" id="nudgeSent">✓ Nudge sent to student's terminal</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STUDENT DATA ──
+const AVATARS = ['🧑‍💻','👩‍💻','🧑🏽‍💻','👨🏾‍💻','👩🏻‍💻','🧑🏿‍💻','👨‍💻','👩🏽‍💻','🧑🏼‍💻','👨🏻‍💻','👩🏾‍💻','🧑🏻‍💻','👨🏽‍💻','👩🏿‍💻','🧑‍💻','👨🏿‍💻'];
+const NAMES = [
+  'Amara O.','Kwame T.','Sofia R.','Liam C.','Aisha B.',
+  'Noah P.','Priya K.','Ethan M.','Zara N.','Lucas A.',
+  'Fatima H.','Oliver W.','Maya J.','Kai L.','Ingrid S.','Darius F.'
+];
+const CMDS = [
+  'nmap -sn 192.168.10.0/24','nmap -sV 192.168.10.99','nmap -O 192.168.10.99',
+  'report 192.168.10.99','ping 192.168.10.99','arp -a','help','ls'
+];
+const OBJ_NAMES = [
+  'Scan network for live hosts',
+  'Identify open ports on target',
+  'Detect OS & services',
+  'File incident report'
+];
+
+let students = [];
+let currentFilter = 'all';
+let selectedStudent = null;
+let startTime = Date.now();
+let tickCount = 0;
+
+function initStudents() {
+  students = NAMES.map((name, i) => ({
+    id: i,
+    name,
+    avatar: AVATARS[i],
+    objs: [false, false, false, false],
+    cmdHistory: [],
+    lastCmd: null,
+    lastActive: Date.now() - Math.random() * 60000,
+    stuckSince: null,
+    status: 'idle',
+    nudgeCount: 0,
+  }));
+
+  // seed some initial variety
+  const starters = [0,2,4,7,9,11,14];
+  starters.forEach(i => {
+    students[i].objs[0] = true;
+    students[i].cmdHistory.push({ cmd: 'nmap -sn 192.168.10.0/24', time: Date.now() - 120000 });
+    students[i].lastCmd = 'nmap -sn 192.168.10.0/24';
+    students[i].status = 'active';
+    students[i].lastActive = Date.now() - Math.random() * 30000;
+  });
+  [2,9,14].forEach(i => {
+    students[i].objs[1] = true;
+    students[i].cmdHistory.push({ cmd: 'nmap -sV 192.168.10.99', time: Date.now() - 60000 });
+    students[i].lastCmd = 'nmap -sV 192.168.10.99';
+  });
+}
+
+// ── SIMULATION ──
+function tick() {
+  tickCount++;
+  const now = Date.now();
+
+  students.forEach(s => {
+    const sinceActive = now - s.lastActive;
+
+    // random progress advancement
+    const r = Math.random();
+    if (r < 0.04 && s.status !== 'complete') {
+      // advance an objective
+      const nextObj = s.objs.indexOf(false);
+      if (nextObj !== -1) {
+        s.objs[nextObj] = true;
+        const cmdForObj = CMDS[nextObj];
+        s.cmdHistory.unshift({ cmd: cmdForObj, time: now });
+        s.lastCmd = cmdForObj;
+        s.lastActive = now;
+        s.stuckSince = null;
+        if (s.objs.every(Boolean)) {
+          s.status = 'complete';
+          s.cmdHistory.unshift({ cmd: 'report 192.168.10.99', time: now });
+        } else {
+          s.status = 'active';
+        }
+      }
+    } else if (r < 0.06 && s.status === 'active') {
+      // random extra command
+      const cmd = CMDS[Math.floor(Math.random() * CMDS.length)];
+      s.cmdHistory.unshift({ cmd, time: now });
+      s.lastCmd = cmd;
+      s.lastActive = now;
+    }
+
+    // stuck detection
+    if (s.status === 'active' && sinceActive > 180000) {
+      s.status = 'stuck';
+      if (!s.stuckSince) s.stuckSince = now;
+    }
+
+    // idle detection
+    if (s.status === 'idle' && tickCount > 5 && Math.random() < 0.03) {
+      s.status = 'active';
+      s.lastActive = now;
+    }
+  });
+
+  updateStats();
+  renderGrid();
+  if (selectedStudent !== null) updateDetail(students[selectedStudent]);
+  document.getElementById('lastUpdate').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+  // elapsed
+  const mins = Math.floor((now - startTime) / 60000);
+  document.getElementById('elapsed').textContent = mins + 'm';
+}
+
+// ── STATS ──
+function updateStats() {
+  const n = students.length;
+  const done = students.filter(s => s.status === 'complete').length;
+  const active = students.filter(s => s.status === 'active').length;
+  const stuck = students.filter(s => s.status === 'stuck').length;
+
+  const avgPct = Math.round(students.reduce((sum, s) => {
+    return sum + (s.objs.filter(Boolean).length / 4) * 100;
+  }, 0) / n);
+
+  document.getElementById('statDone').textContent = done;
+  document.getElementById('statDonePct').textContent = Math.round(done/n*100) + '% of class';
+  document.getElementById('statActive').textContent = active;
+  document.getElementById('statStuck').textContent = stuck;
+  document.getElementById('statAvg').textContent = avgPct + '%';
+
+  const classDonePct = Math.round(done / n * 100);
+  document.getElementById('classPct').textContent = classDonePct + '%';
+  document.getElementById('cpFill').style.width = classDonePct + '%';
+
+  // per-obj breakdown
+  [0,1,2,3].forEach(oi => {
+    const p = Math.round(students.filter(s => s.objs[oi]).length / n * 100);
+    document.getElementById('ob'+(oi+1)).style.width = p + '%';
+    document.getElementById('ob'+(oi+1)+'pct').textContent = p + '%';
+  });
+
+  document.getElementById('studentCount').textContent = '(' + n + ')';
+}
+
+// ── RENDER GRID ──
+function renderGrid() {
+  const grid = document.getElementById('studentGrid');
+  const filtered = students.filter(s => {
+    if (currentFilter === 'all') return true;
+    if (currentFilter === 'active') return s.status === 'active';
+    if (currentFilter === 'stuck') return s.status === 'stuck';
+    if (currentFilter === 'complete') return s.status === 'complete';
+    return true;
+  });
+
+  grid.innerHTML = '';
+  filtered.forEach(s => {
+    const card = document.createElement('div');
+    card.className = `student-card ${s.status}`;
+    card.onclick = () => openDetail(s.id);
+
+    const objDots = s.objs.map((done, i) => {
+      const current = !done && (i === 0 || s.objs[i-1]);
+      return `<div class="obj-dot ${done ? 'done' : current && s.status === 'active' ? 'current' : ''}"></div>`;
+    }).join('');
+
+    const pillClass = { active:'pill-active', complete:'pill-done', stuck:'pill-stuck', idle:'pill-idle' }[s.status];
+    const pillText = { active:'ACTIVE', complete:'DONE ✓', stuck:'HELP?', idle:'IDLE' }[s.status];
+
+    const completedCount = s.objs.filter(Boolean).length;
+    const sinceStr = s.lastCmd ? timeSince(s.lastActive) : 'not started';
+    const lastCmdDisplay = s.lastCmd ? s.lastCmd : 'no commands yet';
+
+    card.innerHTML = `
+      ${s.status === 'complete' ? '<div class="complete-badge">🏆</div>' : ''}
+      <div class="student-card-top">
+        <div class="avatar" style="background:${avatarBg(s.id)}">${s.avatar}</div>
+        <div>
+          <div class="student-name">${s.name}</div>
+          <div class="student-time">active ${sinceStr}</div>
+        </div>
+        <span class="status-pill ${pillClass}">${pillText}</span>
+      </div>
+      <div class="obj-dots">${objDots}</div>
+      <div class="last-cmd">
+        <span class="last-cmd-prompt">$</span>
+        <span class="last-cmd-text">${lastCmdDisplay}</span>
+      </div>
+      <div class="progress-text">${completedCount}/4 objectives • <strong>${Math.round(completedCount/4*100)}%</strong></div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function avatarBg(id) {
+  const colors = ['#1e3a5f','#2d1b4e','#1a3d2b','#3d2b1a','#1a2d3d','#2b1a3d','#1a3d3d','#3d1a2b'];
+  return colors[id % colors.length];
+}
+
+function timeSince(ts) {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return s + 's ago';
+  return Math.floor(s/60) + 'm ago';
+}
+
+// ── DETAIL PANEL ──
+function openDetail(id) {
+  selectedStudent = id;
+  updateDetail(students[id]);
+  document.getElementById('detailOverlay').classList.add('open');
+  document.getElementById('nudgeSent').style.display = 'none';
+  document.getElementById('nudgeText').value = '';
+}
+
+function updateDetail(s) {
+  document.getElementById('dName').textContent = s.avatar + ' ' + s.name;
+  const pct = Math.round(s.objs.filter(Boolean).length / 4 * 100);
+  document.getElementById('dSub').textContent = `${pct}% complete · ${s.cmdHistory.length} commands run`;
+
+  const objsEl = document.getElementById('dObjs');
+  objsEl.innerHTML = s.objs.map((done, i) => `
+    <div class="obj-detail-row">
+      <span class="obj-detail-icon">${done ? '✅' : '⬜'}</span>
+      <span style="color:${done ? 'var(--green)' : 'var(--muted)'};font-size:13px">${OBJ_NAMES[i]}</span>
+      ${done ? '<span class="obj-detail-time">done</span>' : ''}
+    </div>
+  `).join('');
+
+  const cmdEl = document.getElementById('dCmdLog');
+  if (s.cmdHistory.length === 0) {
+    cmdEl.innerHTML = '<div style="color:var(--muted);font-size:12px">No commands yet.</div>';
+  } else {
+    cmdEl.innerHTML = s.cmdHistory.slice(0,8).map(c => `
+      <div class="cmd-log-item">
+        <div class="cmd-log-time">${new Date(c.time).toLocaleTimeString()}</div>
+        <div class="cmd-log-cmd">$ ${c.cmd}</div>
+      </div>
+    `).join('');
+  }
+}
+
+function closeDetail(e) {
+  if (e.target === document.getElementById('detailOverlay')) closeDetailPanel();
+}
+function closeDetailPanel() {
+  document.getElementById('detailOverlay').classList.remove('open');
+  selectedStudent = null;
+}
+
+function sendNudge() {
+  const txt = document.getElementById('nudgeText').value.trim();
+  if (!txt) return;
+  document.getElementById('nudgeSent').style.display = 'block';
+  document.getElementById('nudgeText').value = '';
+  if (selectedStudent !== null) students[selectedStudent].nudgeCount++;
+}
+
+// ── FILTERS ──
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+}
+
+// ── CONTROLS ──
+function pauseAll()     { alert('⏸ All student labs paused. Click to resume from the student view.'); }
+function showHintAll()  { alert('💡 Hint pushed to all student terminals.'); }
+function broadcastMsg() {
+  const msg = prompt('Enter a message to broadcast to all students:');
+  if (msg) alert('📢 Sent: "' + msg + '"');
+}
+function endSession()   {
+  if (confirm('End the session? Students will see a summary screen.')) alert('Session ended. Summary sent to all students.');
+}
+
+// ── INIT ──
+const now = new Date();
+document.getElementById('sessionTime').textContent =
+  now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+document.getElementById('totalStudents').textContent = NAMES.length;
+
+initStudents();
+updateStats();
+renderGrid();
+
+// live tick every 4 seconds
+setInterval(tick, 4000);
+</script>
+</body>
+</html>
