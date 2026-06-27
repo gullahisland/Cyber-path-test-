@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CyberPath — Youth Cybersecurity Programme</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+  :root {
+    --bg:     #0a0e1a;
+    --panel:  #111827;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2:#7c3aed;
+    --green:  #10b981;
+    --text:   #e2e8f0;
+    --muted:  #64748b;
+    --mono:   'JetBrains Mono', monospace;
+    --sans:   'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  /* subtle grid background */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 640px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* logo */
+  .logo {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: .1em;
+    margin-bottom: 48px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo span { color: var(--muted); }
+  .logo-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+  }
+
+  /* hero */
+  .hero-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  h1 {
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--text) 40%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    font-size: 16px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 48px;
+    max-width: 480px;
+  }
+  .hero-sub strong { color: var(--text); }
+
+  /* cards */
+  .cards { display: flex; flex-direction: column; gap: 16px; margin-bottom: 48px; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    transition: all .25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute; inset: 0;
+    opacity: 0;
+    transition: opacity .25s;
+  }
+  .card.student::before { background: linear-gradient(135deg, rgba(0,212,255,.06), transparent 60%); }
+  .card.instructor::before { background: linear-gradient(135deg, rgba(124,58,237,.06), transparent 60%); }
+  .card:hover { transform: translateY(-2px); }
+  .card.student:hover { border-color: rgba(0,212,255,.4); box-shadow: 0 8px 32px rgba(0,212,255,.08); }
+  .card.instructor:hover { border-color: rgba(124,58,237,.4); box-shadow: 0 8px 32px rgba(124,58,237,.08); }
+  .card:hover::before { opacity: 1; }
+
+  .card-icon {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+  .card.student .card-icon { background: rgba(0,212,255,.1); }
+  .card.instructor .card-icon { background: rgba(124,58,237,.1); }
+
+  .card-body { flex: 1; }
+  .card-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .card.student .card-label { color: var(--accent); }
+  .card.instructor .card-label { color: #a78bfa; }
+
+  .card-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .card-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .card-arrow {
+    font-size: 20px;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: transform .2s, color .2s;
+  }
+  .card:hover .card-arrow { transform: translateX(4px); color: var(--text); }
+
+  /* module badge strip */
+  .module-strip {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 48px;
+  }
+  .mod-chip {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .mod-chip.active {
+    border-color: rgba(0,212,255,.3);
+    color: var(--accent);
+    background: rgba(0,212,255,.05);
+  }
+  .mod-chip.active::before {
+    content: '●';
+    font-size: 8px;
+    color: var(--green);
+  }
+
+  /* footer */
+  footer {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.7;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+  }
+  footer a { color: var(--muted); text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="logo">
+    CYBER<span>PATH</span>
+    <div class="logo-line"></div>
+    <span style="font-size:11px;letter-spacing:.05em">Module 1 Prototype</span>
+  </div>
+
+  <div class="hero-tag">Youth Cybersecurity Programme · Ages 14–17</div>
+  <h1>Hands-on security skills for the next generation</h1>
+  <p class="hero-sub">
+    A free, browser-based cybersecurity certification designed for secondary schools and summer camps.
+    <strong>No software. No accounts. No cost.</strong>
+  </p>
+
+  <!-- module progress strip -->
+  <div class="module-strip">
+    <div class="mod-chip active">01 · Who's on the Network?</div>
+    <div class="mod-chip">02 · Who Are You Talking To?</div>
+    <div class="mod-chip">03 · What's Broken?</div>
+    <div class="mod-chip">04 · Something's Wrong</div>
+    <div class="mod-chip">05 · How Do We Stay Safe?</div>
+    <div class="mod-chip">06 · Capstone</div>
+  </div>
+
+  <!-- cards -->
+  <div class="cards">
+    <a class="card student" href="module1_cyber_lab_1.html">
+      <div class="card-icon">🧑‍💻</div>
+      <div class="card-body">
+        <div class="card-label">For Students</div>
+        <div class="card-title">Module 1 — Student Lab</div>
+        <div class="card-desc">An unknown device appeared on the school network overnight. Investigate it using real security tools — Nmap, port scanning, OS detection — and file your report.</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a class="card instructor" href="instructor_dashboard.html">
+      <div class="card-icon">📊</div>
+      <div class="card-body">
+        <div class="card-label">For Instructors</div>
+        <div class="card-title">Live Instructor Dashboard</div>
+        <div class="card-desc">Monitor every student's progress in real time. See who's stuck, view command histories, send private hints, and control pacing across the whole class.</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+  </div>
+
+  <footer>
+    CyberPath is a free programme for schools and summer camps · Prototype — June 2026<br>
+    Built to be open, accessible, and genuinely hands-on.
+  </footer>
+
+</div>
+</body>
+</html>
